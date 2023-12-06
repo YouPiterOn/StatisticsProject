@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #import seaborn as sns
 
+types = ['Coffee', 'Bakery', 'Tea', 'Drinking Chocolate']
+
 
 def tables_for_product(product: str):
     df = pd.read_csv("statistic_project.csv", sep=';')
@@ -10,39 +12,68 @@ def tables_for_product(product: str):
     timeFrame['time'] = pd.to_timedelta(df['transaction_time']).dt.components['hours'].astype(int)
     timeFrame['qty'] = df['transaction_qty']
     timeFrame = timeFrame.groupby('time')['qty'].sum().reset_index()
-    plt.subplot(2, 1, 1)
-    plt.bar(timeFrame['time'], timeFrame['qty'])
+    timePlt = plt.subplot(2, 1, 1)
+    cont = timePlt.bar(timeFrame['time'], timeFrame['qty'])
+    timePlt.bar_label(cont)
     plt.title(product)
 
     dayFrame = pd.DataFrame(columns=['day', 'qty'])
     dayFrame['day'] = pd.to_datetime(df['transaction_date'], format='%d.%m.%Y').dt.day.astype(int)
     dayFrame['qty'] = df['transaction_qty']
     dayFrame = dayFrame.groupby('day')['qty'].sum().reset_index()
-    plt.subplot(2, 1, 2)
-    plt.bar(dayFrame['day'], dayFrame['qty'])
+    dayPlt = plt.subplot(2, 1, 2)
+    cont = dayPlt.bar(dayFrame['day'], dayFrame['qty'])
+    dayPlt.bar_label(cont)
     plt.show()
 
 
-tables_for_product('Bakery')
-tables_for_product('Drinking Chocolate')
-tables_for_product('Tea')
-tables_for_product('Coffee')
+"""
+for type in types:
+    tables_for_product(type)
+"""
 
 
-def qty_for_each_day():
+def tables_for_all_products():
     df = pd.read_csv("statistic_project.csv", sep=';')
-    localFrame1 = pd.DataFrame(columns=['day', 'qty'])
-    localFrame2 = pd.DataFrame(columns=['day', 'qty', 'type'])
+    timeFrame = pd.DataFrame(columns=['time', 'qty'])
+    timeFrame['time'] = pd.to_timedelta(df['transaction_time']).dt.components['hours'].astype(int)
+    timeFrame['qty'] = df['transaction_qty']
+    timeFrame = timeFrame.groupby('time')['qty'].sum().reset_index()
+    timePlt = plt.subplot(2, 1, 1)
+    cont = timePlt.bar(timeFrame['time'], timeFrame['qty'])
+    timePlt.bar_label(cont)
+    plt.title('All products')
 
-    localFrame1['day'] = pd.to_datetime(df['transaction_date'], format='%d.%m.%Y').dt.day.astype(int)
-    localFrame1['qty'] = df['transaction_qty']
+    dayFrame = pd.DataFrame(columns=['day', 'qty'])
+    dayFrame['day'] = pd.to_datetime(df['transaction_date'], format='%d.%m.%Y').dt.day.astype(int)
+    dayFrame['qty'] = df['transaction_qty']
+    dayFrame = dayFrame.groupby('day')['qty'].sum().reset_index()
+    dayPlt = plt.subplot(2, 1, 2)
+    cont = dayPlt.bar(dayFrame['day'], dayFrame['qty'])
+    dayPlt.bar_label(cont)
+    plt.show()
 
-    localFrame2['day'] = localFrame1['day']
-    localFrame2['qty'] = df['transaction_qty']
 
-    result = localFrame1.groupby('day')['qty'].sum().reset_index()
-    print(result)
+tables_for_all_products()
 
-    localFrame2['type'] = df['product_category']
-    result = localFrame2.groupby(['day', 'type'])['qty'].sum().reset_index()
-    print(result)
+
+def price_from_place():
+    df = pd.read_csv("statistic_project.csv", sep=';')
+    df = df.drop_duplicates(subset=['product_type', 'store_location'])
+    locationFrame = pd.DataFrame(columns=['product', 'location', 'price', 'type'])
+    locationFrame['product'] = df['product_type']
+    locationFrame['location'] = df['store_location']
+    locationFrame['price'] = df['unit_price']
+    locationFrame['type'] = df['product_category']
+    products = locationFrame['product'].drop_duplicates()
+    locationFrame['price'] = locationFrame['price'].apply(lambda x: float(x.replace(',', '.')))
+    for type in types:
+        typeFrame = locationFrame[locationFrame['type'] == type]
+        typeFrame = typeFrame.groupby('location')['price'].mean().reset_index()
+        plt.plot(typeFrame['location'], typeFrame['price'])
+    plt.legend(types)
+    plt.show()
+    print(locationFrame)
+
+
+price_from_place()

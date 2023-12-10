@@ -101,6 +101,7 @@ def bakery_percents(df):
     print(total)
     result_sum['percent'] = result_sum['transaction_qty'] / total * 100
     print(result_sum, '\n')
+    return result_sum
 
 
 def bakery_analysis():
@@ -167,4 +168,50 @@ def quarters():
         bakery_percents(q2_store)
 
 
-quarters()
+# quarters()
+
+
+def month():
+    df = pd.read_csv("year_data.csv", sep=';')
+    df = df[df['product_category'] == 'Bakery']
+    df['date'] = pd.to_datetime(df['transaction_date'], format='%d.%m.%Y')
+    split_dates = ['2023-01-31', '2023-02-28', '2023-03-31',
+                   '2023-04-30', '2023-05-31', '2023-06-30']
+    place = 1
+    for date in split_dates:
+        month_data = df[df['date'] <= pd.to_datetime(date, format='%Y-%m-%d')].copy()
+        df = df[df['date'] > pd.to_datetime(date, format='%Y-%m-%d')]
+
+        print(date)
+        plot = plt.subplot(2, 3, place)
+        place += 1
+        result = bakery_percents(month_data)
+        plot.bar(result['product_type'], result['percent'])
+    plt.show()
+
+
+# month()
+
+
+def task():
+    df = pd.read_csv("statistic_project.csv", sep=';')
+    df['hours'] = pd.to_timedelta(df['transaction_time']).dt.components['hours'].astype(int)
+    split_time = 13
+    first_half = df[df['hours'] < split_time].copy()
+    second_half = df[df['hours'] >= split_time].copy()
+
+    total1 = first_half['transaction_qty'].sum()
+    total2 = second_half['transaction_qty'].sum()
+
+    first_half = first_half[first_half['product_category'] == 'Bakery']
+    second_half = second_half[second_half['product_category'] == 'Bakery']
+
+    bakery1 = first_half['transaction_qty'].sum()
+    bakery2 = second_half['transaction_qty'].sum()
+
+    print('total:', total1, total2)
+    print('bakery:', bakery1, bakery2)
+
+
+task()
+
